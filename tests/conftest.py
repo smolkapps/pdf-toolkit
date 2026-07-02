@@ -59,6 +59,52 @@ def make_image_pdf(tmp_path):
 
 
 @pytest.fixture
+def make_jpeg_image_pdf(tmp_path):
+    """Return a factory for a single-page PDF with one DCT (JPEG) image."""
+
+    def _factory(name, *, size=(48, 32)):
+        out = str(tmp_path / name)
+        return make_fixtures.make_jpeg_image_pdf(out, size=size)
+
+    return _factory
+
+
+@pytest.fixture
+def make_shared_image_pdf(tmp_path):
+    """Return a factory for a PDF sharing ONE image XObject across pages."""
+
+    def _factory(name, *, num_pages=2, size=(16, 12)):
+        out = str(tmp_path / name)
+        return make_fixtures.make_shared_image_pdf(
+            out, num_pages=num_pages, size=size
+        )
+
+    return _factory
+
+
+@pytest.fixture
+def make_inline_image_pdf(tmp_path):
+    """Return a factory for a PDF whose only image is an inline BI/ID/EI image."""
+
+    def _factory(name, *, size=(4, 4)):
+        out = str(tmp_path / name)
+        return make_fixtures.make_inline_image_pdf(out, size=size)
+
+    return _factory
+
+
+@pytest.fixture
+def make_mixed_good_bad_image_pdf(tmp_path):
+    """Return a factory for a PDF with one decodable + one undecodable image."""
+
+    def _factory(name, *, size=(10, 8)):
+        out = str(tmp_path / name)
+        return make_fixtures.make_mixed_good_bad_image_pdf(out, size=size)
+
+    return _factory
+
+
+@pytest.fixture
 def page_markers():
     """Return a helper that reads the per-page integer markers from a PDF.
 

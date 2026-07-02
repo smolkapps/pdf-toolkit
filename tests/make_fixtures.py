@@ -13,6 +13,7 @@ also be run as a script to drop a sample file on disk for manual play:
 
 from __future__ import annotations
 
+import os
 import sys
 from typing import Iterable, Optional
 
@@ -151,6 +152,208 @@ def make_image_pdf(
             )
         pdf.showPage()
     pdf.save()
+    return path
+
+
+def make_jpeg_image_pdf(
+    path: str,
+    *,
+    size=(48, 32),
+    pagesize=LETTER,
+) -> str:
+    """Create a single-page PDF embedding one DCT (JPEG) encoded image.
+
+    Passing an on-disk ``.jpg`` to reportlab's ``drawImage`` preserves the
+    JPEG bytes as a ``/DCTDecode`` image XObject (rather than re-encoding to
+    Flate), giving the ``extract-images`` tests a non-Flate fixture whose
+    extracted file should come back out as ``.jpg``.
+
+    Returns:
+        ``path``.
+    """
+    import tempfile
+
+    from PIL import Image
+
+    width_px, height_px = size
+    img = Image.new("RGB", (width_px, height_px))
+    for x in range(width_px):
+        for y in range(height_px):
+            img.putpixel((x, y), ((x * 5) % 256, (y * 7) % 256, 64))
+
+    # reportlab reads the JPEG from a path, so stage it in a temp file.
+    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as handle:
+        jpeg_path = handle.name
+    try:
+        img.save(jpeg_path, "JPEG", quality=85)
+        pdf = canvas.Canvas(path, pagesize=pagesize)
+        _, height = pagesize
+        pdf.setFont("Helvetica-Bold", 48)
+        pdf.drawString(72, height - 120, "PAGE 1")
+        pdf.drawImage(jpeg_path, 72, height - 320, width=144, height=96)
+        pdf.showPage()
+        pdf.save()
+    finally:
+        os.remove(jpeg_path)
+    return path
+
+
+def make_shared_image_pdf(
+    path: str,
+    *,
+    num_pages: int = 2,
+    size=(16, 12),
+    pagesize=LETTER,
+) -> str:
+    """Create a PDF where ONE image XObject is shared across several pages.
+
+    Built directly with pikepdf: a single image stream is made an indirect
+    object and referenced from every page's ``/Resources /XObject``. Because
+    each page points at the *same* object, ``extract-images`` must de-duplicate
+    them and produce exactly one file — this is the real de-duplication
+    fixture (reportlab embeds a distinct copy per page and cannot exercise it).
+
+    Returns:
+        ``path``.
+    """
+    import zlib
+
+    import pikepdf
+    from pikepdf import Array, Dictionary, Name
+
+    if num_pages < 1:
+        raise ValueError("num_pages must be >= 1")
+
+    width_px, height_px = size
+    raw = bytearray()
+    for y in range(height_px):
+        for x in range(width_px):
+            raw += bytes(((x * 7) % 256, (y * 11) % 256, 128))
+
+    pdf = pikepdf.Pdf.new()
+    image = pdf.make_stream(zlib.compress(bytes(raw)))
+    image.stream_dict = Dictionary(
+        Type=Name.XObject,
+        Subtype=Name.Image,
+        Width=width_px,
+        Height=height_px,
+        ColorSpace=Name.DeviceRGB,
+        BitsPerComponent=8,
+        Filter=Name.FlateDecode,
+    )
+    image_ref = pdf.make_indirect(image)
+
+    content = b"q 100 0 0 75 100 500 cm /Im0 Do Q"
+    _, page_h = pagesize
+    for _ in range(num_pages):
+        page = Dictionary(
+            Type=Name.Page,
+            MediaBox=Array([0, 0, pagesize[0], page_h]),
+            Resources=Dictionary(XObject=Dictionary(Im0=image_ref)),
+            Contents=pdf.make_stream(content),
+        )
+        pdf.pages.append(pikepdf.Page(pdf.make_indirect(page)))
+    pdf.save(path)
+    return path
+
+
+def make_inline_image_pdf(
+    path: str,
+    *,
+    size=(4, 4),
+    pagesize=LETTER,
+) -> str:
+    """Create a single-page PDF whose only image is an inline (BI/ID/EI) image.
+
+    Inline images live in the content stream rather than as XObjects, so they
+    are invisible to a naive resource scan; this fixture verifies that
+    ``extract-images`` promotes them (via ``externalize_inline_images``) and
+    still exports them.
+
+    Returns:
+        ``path``.
+    """
+    import pikepdf
+    from pikepdf import Array, Dictionary, Name
+
+    width_px, height_px = size
+    data = bytes((i * 5) % 256 for i in range(width_px * height_px * 3))
+    content = (
+        b"q 100 0 0 100 100 500 cm BI /W "
+        + str(width_px).encode()
+        + b" /H "
+        + str(height_px).encode()
+        + b" /CS /RGB /BPC 8 ID "
+        + data
+        + b" EI Q"
+    )
+    pdf = pikepdf.Pdf.new()
+    page = Dictionary(
+        Type=Name.Page,
+        MediaBox=Array([0, 0, pagesize[0], pagesize[1]]),
+        Resources=Dictionary(),
+        Contents=pdf.make_stream(content),
+    )
+    pdf.pages.append(pikepdf.Page(pdf.make_indirect(page)))
+    pdf.save(path)
+    return path
+
+
+def make_mixed_good_bad_image_pdf(
+    path: str,
+    *,
+    size=(10, 8),
+    pagesize=LETTER,
+) -> str:
+    """Create a 2-page PDF: one decodable image, one undecodable image.
+
+    The bad image declares ``/FlateDecode`` but stores bytes that are not valid
+    deflate data, so every decode path (qpdf and the Pillow fallback) fails on
+    it. This is the shape ``extract-images`` must survive: the good image is
+    exported, the bad one is skipped and counted — the run never aborts.
+
+    Returns:
+        ``path``.
+    """
+    import zlib
+
+    import pikepdf
+    from pikepdf import Array, Dictionary, Name
+
+    width_px, height_px = size
+
+    def _image_dict(stream):
+        stream.stream_dict = Dictionary(
+            Type=Name.XObject,
+            Subtype=Name.Image,
+            Width=width_px,
+            Height=height_px,
+            ColorSpace=Name.DeviceRGB,
+            BitsPerComponent=8,
+            Filter=Name.FlateDecode,
+        )
+        return stream
+
+    pdf = pikepdf.Pdf.new()
+
+    raw = bytearray()
+    for y in range(height_px):
+        for x in range(width_px):
+            raw += bytes(((x * 9) % 256, (y * 3) % 256, 200))
+    good = pdf.make_indirect(_image_dict(pdf.make_stream(zlib.compress(bytes(raw)))))
+    bad = pdf.make_indirect(
+        _image_dict(pdf.make_stream(b"this is not valid deflate data at all!!!"))
+    )
+
+    for ref in (good, bad):
+        page = Dictionary(
+            Type=Name.Page,
+            MediaBox=Array([0, 0, pagesize[0], pagesize[1]]),
+            Resources=Dictionary(XObject=Dictionary(Im0=ref)),
+            Contents=pdf.make_stream(b"q 10 0 0 8 100 500 cm /Im0 Do Q"),
+        )
+        pdf.pages.append(pikepdf.Page(pdf.make_indirect(page)))
+    pdf.save(path)
     return path
 
 

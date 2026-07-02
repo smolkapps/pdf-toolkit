@@ -17,12 +17,14 @@ Backends:
 
 from __future__ import annotations
 
+import glob
 import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence
 
 import pikepdf
 import pikepdf.models.image as _image_module
+from PIL import Image as _PILImage
 from pypdf import PdfReader, PdfWriter
 
 from .ranges import RangeError, parse_pages
@@ -333,6 +335,44 @@ class ExtractImagesResult:
         return len(self.files)
 
 
+# Failures that mean "this one image cannot be extracted" — never a reason to
+# abort the whole run. Scanned and malformed PDFs (exactly what this command
+# targets) routinely hit these: image types qpdf will not transcode, JBIG2
+# without jbig2dec (DependencyError), CCITTFax missing DecodeParms (ValueError),
+# truncated or invalid image streams (PdfError / InvalidPdfImageError /
+# ImageDecompressionError), and Pillow refusing to decode the pixels
+# (OSError / DecompressionBombError). Any of these is caught, the offending
+# image is skipped and counted, and extraction continues with the next one.
+_UNEXTRACTABLE = (
+    pikepdf.UnsupportedImageTypeError,
+    pikepdf.HifiPrintImageNotTranscodableError,
+    pikepdf.DependencyError,
+    pikepdf.PdfError,
+    _image_module.NotExtractableError,
+    _image_module.InvalidPdfImageError,
+    _image_module.ImageDecompressionError,
+    NotImplementedError,
+    ValueError,
+    OSError,
+    _PILImage.DecompressionBombError,
+)
+
+
+def _cleanup_orphans(prefix: str) -> None:
+    """Remove any partially written files left behind for ``prefix``.
+
+    Both ``extract_to`` and Pillow's ``save`` can create a file and then raise
+    while encoding it, leaving a truncated orphan on disk. We only ever create
+    paths of the form ``<prefix>.<ext>`` (the prefix already embeds a unique
+    page/index tag), so globbing on it cannot touch another image's output.
+    """
+    for path in glob.glob(glob.escape(prefix) + ".*"):
+        try:
+            os.remove(path)
+        except OSError:  # pragma: no cover - best effort cleanup
+            pass
+
+
 def _extract_one_image(image: "pikepdf.PdfImage", prefix: str) -> Optional[str]:
     """Write a single embedded image to ``prefix`` + an appropriate suffix.
 
@@ -340,22 +380,45 @@ def _extract_one_image(image: "pikepdf.PdfImage", prefix: str) -> Optional[str]:
     filters, e.g. ``.jpg`` for DCT, ``.png`` for Flate), and falls back to a
     Pillow-encoded PNG for the handful of image types qpdf cannot transcode on
     its own. Returns the written path, or ``None`` if the image is genuinely
-    not extractable.
+    not extractable — in which case any partial output is cleaned up first.
+
+    Note: an image's soft mask (``/SMask``, i.e. alpha/transparency) is a
+    separate XObject and is *not* composited in here; the extracted file holds
+    the base colour image without transparency applied.
     """
     try:
         return image.extract_to(fileprefix=prefix)
-    except (
-        pikepdf.UnsupportedImageTypeError,
-        pikepdf.HifiPrintImageNotTranscodableError,
-        _image_module.NotExtractableError,
-        NotImplementedError,
-    ):
-        try:
-            out_path = prefix + ".png"
-            image.as_pil_image().save(out_path)
-            return out_path
-        except Exception:  # pragma: no cover - exotic/broken image stream
-            return None
+    except _UNEXTRACTABLE:
+        # qpdf may have opened/truncated a file before giving up; drop it so a
+        # failed fast path never leaves a corrupt image behind.
+        _cleanup_orphans(prefix)
+
+    out_path = prefix + ".png"
+    try:
+        pil = image.as_pil_image()
+    except _UNEXTRACTABLE:
+        return None
+    try:
+        pil.save(out_path)
+    except _UNEXTRACTABLE:  # pragma: no cover - exotic/broken image stream
+        _cleanup_orphans(prefix)
+        return None
+    finally:
+        pil.close()
+    return out_path
+
+
+def _page_images(page: "pikepdf.Page") -> "Dict[str, object]":
+    """Return the image XObjects on ``page`` as a name -> object mapping.
+
+    ``Page.get_images()`` (pikepdf >= 10.9) is preferred because it also
+    recurses into nested form XObjects; on older pikepdf we fall back to the
+    ``Page.images`` property, which reports only the page's top-level images.
+    """
+    getter = getattr(page, "get_images", None)
+    if getter is not None:
+        return getter()
+    return page.images
 
 
 def extract_images(
@@ -366,11 +429,17 @@ def extract_images(
 ) -> ExtractImagesResult:
     """Export every embedded raster image from ``in_path`` into ``outdir``.
 
-    Pages are scanned in order (including images nested inside form XObjects).
-    Each distinct image object is written once, even if it is reused on several
+    Pages are scanned in order (including images nested inside form XObjects,
+    and inline BI/ID/EI images, which are promoted to XObjects first). Each
+    distinct image object is written once, even if it is reused on several
     pages, so a repeated logo does not produce a file per page. Output files are
     named ``<stem>_p<NNN>_img<NN>.<ext>`` where ``<NNN>`` is the 1-based page on
     which the image first appears and ``<ext>`` matches the stored encoding.
+
+    An image that cannot be decoded (unsupported codec, missing optional
+    dependency such as jbig2dec, or a truncated/corrupt stream) is skipped and
+    counted in ``result.skipped`` rather than aborting the whole run. Soft
+    masks (``/SMask`` transparency) are not composited into the output.
 
     Args:
         in_path: source PDF.
@@ -402,10 +471,18 @@ def extract_images(
         os.makedirs(outdir, exist_ok=True)
         seen: set = set()
         for page_number, page in enumerate(pdf.pages, start=1):
+            # Promote inline (BI/ID/EI) images to XObjects so they are
+            # enumerated alongside regular image XObjects. Best effort: a
+            # malformed content stream must not abort the whole extraction.
+            try:
+                page.externalize_inline_images()
+            except (pikepdf.PdfError, ValueError):  # pragma: no cover
+                pass
             index = 0
-            for raw in page.get_images().values():
-                # De-duplicate images shared across pages by object identity.
-                key = raw.objgen if raw.is_indirect else id(raw)
+            for raw in _page_images(page).values():
+                # De-duplicate images shared across pages by object identity;
+                # image XObjects are always indirect objects.
+                key = raw.objgen
                 if key in seen:
                     continue
                 seen.add(key)
@@ -413,7 +490,14 @@ def extract_images(
                     image = pikepdf.PdfImage(raw)
                 except Exception:  # not an image (e.g. a plain form) - skip
                     continue
-                if min_size and (image.width < min_size or image.height < min_size):
+                try:
+                    too_small = min_size and (
+                        image.width < min_size or image.height < min_size
+                    )
+                except _UNEXTRACTABLE:  # pragma: no cover - malformed image dict
+                    result.skipped += 1
+                    continue
+                if too_small:
                     continue
                 index += 1
                 prefix = os.path.join(

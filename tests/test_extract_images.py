@@ -48,6 +48,39 @@ def test_extracted_files_are_valid_decodable_images(make_image_pdf, tmp_path):
         assert img.size == (40, 20)
 
 
+def test_undecodable_image_is_skipped_not_fatal(
+    make_mixed_good_bad_image_pdf, tmp_path
+):
+    # One decodable image and one image whose stream cannot be inflated. The
+    # bad image must be skipped and counted, the good one still exported, and
+    # the call must not raise — the whole point of the broadened error handling.
+    src = make_mixed_good_bad_image_pdf("mixed.pdf", size=(10, 8))
+    outdir = str(tmp_path / "imgs")
+
+    result = extract_images(src, outdir)
+
+    assert len(result) == 1
+    assert result.skipped == 1
+    # No orphaned/partial file was left behind for the failed image.
+    assert len(_list_pngs(outdir)) + len(
+        [f for f in os.listdir(outdir) if f.lower().endswith(".jpg")]
+    ) == 1
+    with Image.open(result.files[0]) as img:
+        assert img.size == (10, 8)
+
+
+def test_cli_reports_skipped_images(make_mixed_good_bad_image_pdf, tmp_path, capsys):
+    src = make_mixed_good_bad_image_pdf("mixed.pdf")
+    outdir = str(tmp_path / "out")
+
+    rc = main(["extract-images", src, "--outdir", outdir])
+
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "Extracted 1 image(s)" in out
+    assert "skipped 1 image(s)" in out
+
+
 def test_no_images_returns_empty_result(make_pdf, tmp_path):
     src = make_pdf("text_only.pdf", 3)  # text fixture has no raster images
     outdir = str(tmp_path / "imgs")
@@ -58,15 +91,60 @@ def test_no_images_returns_empty_result(make_pdf, tmp_path):
     assert result.files == []
 
 
-def test_shared_image_extracted_once(make_image_pdf, tmp_path):
-    # Two pages, both carrying the *same* single image object would dedup; here
-    # the fixture makes per-page-distinct images, so extracting [1, 2] yields 2.
+def test_distinct_images_each_extracted(make_image_pdf, tmp_path):
+    # Two pages carrying per-page-distinct images: no de-duplication, 2 files.
     src = make_image_pdf("doc.pdf", [1, 2])
     outdir = str(tmp_path / "imgs")
 
     result = extract_images(src, outdir)
 
     assert len(result) == 2
+
+
+def test_shared_image_extracted_once(make_shared_image_pdf, tmp_path):
+    # A single image XObject is referenced from three pages' /Resources. It is
+    # the *same* object, so de-duplication must yield exactly one file named
+    # for the first page it appears on.
+    src = make_shared_image_pdf("shared.pdf", num_pages=3, size=(16, 12))
+    outdir = str(tmp_path / "imgs")
+
+    result = extract_images(src, outdir)
+
+    assert len(result) == 1
+    assert result.skipped == 0
+    assert os.path.basename(result.files[0]).startswith("shared_p001_img")
+    with Image.open(result.files[0]) as img:
+        assert img.size == (16, 12)
+
+
+def test_jpeg_image_extracted_as_jpg(make_jpeg_image_pdf, tmp_path):
+    # A DCT/JPEG-encoded image should come back out as .jpg (qpdf's fast path
+    # preserves the stored encoding) and decode at its original dimensions.
+    src = make_jpeg_image_pdf("photo.pdf", size=(48, 32))
+    outdir = str(tmp_path / "imgs")
+
+    result = extract_images(src, outdir)
+
+    assert len(result) == 1
+    path = result.files[0]
+    assert path.lower().endswith(".jpg")
+    with Image.open(path) as img:
+        assert img.format == "JPEG"
+        assert img.size == (48, 32)
+
+
+def test_inline_image_is_extracted(make_inline_image_pdf, tmp_path):
+    # Inline BI/ID/EI images live in the content stream, not /Resources. They
+    # must be promoted to XObjects and exported, not silently dropped.
+    src = make_inline_image_pdf("inline.pdf", size=(4, 4))
+    outdir = str(tmp_path / "imgs")
+
+    result = extract_images(src, outdir)
+
+    assert len(result) == 1
+    assert result.skipped == 0
+    with Image.open(result.files[0]) as img:
+        assert img.size == (4, 4)
 
 
 def test_min_size_filters_small_images(make_image_pdf, tmp_path):

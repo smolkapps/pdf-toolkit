@@ -29,6 +29,7 @@ This installs a single console script: **`pdftoolkit`**.
 | `delete`   | Remove a subset of pages                                           |
 | `reorder`  | Rearrange pages into a new order                                   |
 | `text`     | Extract plain text, one block per page                            |
+| `extract-images` | Export embedded raster images (XObject + inline) to files   |
 | `info`     | Show page count, page size, PDF version, metadata, encryption      |
 | `compress` | Re-save with object streams + stream compression (best effort)     |
 
@@ -72,6 +73,9 @@ pdftoolkit reorder report.pdf --order 3,1,2 -o shuffled.pdf
 pdftoolkit info report.pdf
 pdftoolkit text report.pdf
 
+# Export every embedded raster image (skipping tiny spacer pixels)
+pdftoolkit extract-images report.pdf --outdir images/ --min-size 8
+
 # Shrink (honest about results — see below)
 pdftoolkit compress report.pdf -o smaller.pdf
 ```
@@ -86,6 +90,27 @@ reports the real before/after byte counts and **guarantees the output is never
 larger than the input** — if qpdf's re-save would grow the file, the original
 bytes are kept. It does not downsample images or strip content, so it will not
 claim dramatic gains it cannot deliver.
+
+## A note on `extract-images`
+
+`extract-images` exports the raster images stored in a PDF: image XObjects
+(including those nested inside form XObjects) and inline `BI`/`ID`/`EI` images,
+which are promoted to XObjects before extraction. Each distinct image object is
+written once even when reused across pages, and files keep their stored
+encoding where possible (`.jpg` for DCT/JPEG, `.png` otherwise).
+
+Limitations to be aware of:
+
+- **Soft masks / transparency are not composited.** An image's alpha channel
+  is a separate `/SMask` object; the extracted file is the base colour image
+  **without** transparency applied. Images that relied on an SMask will look
+  opaque.
+- **Vector graphics are not images** and are not exported — this tool extracts
+  raster images only, not drawings or text.
+- **Undecodable images are skipped, not fatal.** An image using a codec qpdf
+  and Pillow cannot decode (e.g. JBIG2 without `jbig2dec`, or a truncated
+  stream) is counted and reported (`note: skipped N image(s)…`) so one bad
+  image in a scanned PDF does not abort the whole run.
 
 ## Behaviour and exit codes
 

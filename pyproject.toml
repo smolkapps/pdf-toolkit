@@ -25,13 +25,20 @@ classifiers = [
 ]
 dependencies = [
     "pypdf>=4.0.0",
-    "pikepdf>=8.0.0",
+    # Page.get_images() (used by extract-images to enumerate a page's images,
+    # including those nested in form XObjects) was only added in pikepdf 10.9.0.
+    # On older releases the command would raise AttributeError, so require it.
+    "pikepdf>=10.9.0",
 ]
 
 [project.optional-dependencies]
 test = [
     "pytest>=7.0.0",
     "reportlab>=4.0.0",
+    # The extract-images tests decode extracted images with Pillow and build
+    # JPEG fixtures with it. pikepdf pulls Pillow in transitively, but the
+    # tests import it directly, so declare it explicitly.
+    "Pillow>=9.0.0",
 ]
 
 [project.scripts]

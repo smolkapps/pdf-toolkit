@@ -25,7 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "pypdf>=4.0.0",
-    "pikepdf>=8.0.0",
+    "pikepdf>=9.0.0",
 ]
 
 [project.optional-dependencies]

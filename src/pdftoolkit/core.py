@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence
 
 import pikepdf
+import pikepdf.models.image as _image_module
 from pypdf import PdfReader, PdfWriter
 
 from .ranges import RangeError, parse_pages
@@ -316,6 +317,116 @@ def text(in_path: str) -> List[str]:
         except Exception:  # pragma: no cover - malformed content stream
             pages_text.append("")
     return pages_text
+
+
+# --------------------------------------------------------------------------- #
+# extract-images
+# --------------------------------------------------------------------------- #
+@dataclass
+class ExtractImagesResult:
+    """Outcome of an :func:`extract_images` call."""
+
+    files: List[str] = field(default_factory=list)
+    skipped: int = 0  # images that could not be decoded to a file
+
+    def __len__(self) -> int:  # convenience for tests / callers
+        return len(self.files)
+
+
+def _extract_one_image(image: "pikepdf.PdfImage", prefix: str) -> Optional[str]:
+    """Write a single embedded image to ``prefix`` + an appropriate suffix.
+
+    Tries pikepdf's fast path (which picks the extension from the image's
+    filters, e.g. ``.jpg`` for DCT, ``.png`` for Flate), and falls back to a
+    Pillow-encoded PNG for the handful of image types qpdf cannot transcode on
+    its own. Returns the written path, or ``None`` if the image is genuinely
+    not extractable.
+    """
+    try:
+        return image.extract_to(fileprefix=prefix)
+    except (
+        pikepdf.UnsupportedImageTypeError,
+        pikepdf.HifiPrintImageNotTranscodableError,
+        _image_module.NotExtractableError,
+        NotImplementedError,
+    ):
+        try:
+            out_path = prefix + ".png"
+            image.as_pil_image().save(out_path)
+            return out_path
+        except Exception:  # pragma: no cover - exotic/broken image stream
+            return None
+
+
+def extract_images(
+    in_path: str,
+    outdir: str,
+    *,
+    min_size: int = 0,
+) -> ExtractImagesResult:
+    """Export every embedded raster image from ``in_path`` into ``outdir``.
+
+    Pages are scanned in order (including images nested inside form XObjects).
+    Each distinct image object is written once, even if it is reused on several
+    pages, so a repeated logo does not produce a file per page. Output files are
+    named ``<stem>_p<NNN>_img<NN>.<ext>`` where ``<NNN>`` is the 1-based page on
+    which the image first appears and ``<ext>`` matches the stored encoding.
+
+    Args:
+        in_path: source PDF.
+        outdir: directory to write images into (created if missing).
+        min_size: skip images whose width *or* height is below this many
+            pixels (default 0 = keep everything). Handy for dropping 1x1
+            spacer pixels.
+
+    Returns:
+        An :class:`ExtractImagesResult` listing the written files in order.
+    """
+    _require_input(in_path)
+    if min_size < 0:
+        raise PdfToolkitError("--min-size must be zero or a positive integer")
+
+    try:
+        pdf = pikepdf.open(in_path)
+    except pikepdf.PasswordError as exc:
+        raise PdfToolkitError(
+            f"{in_path} is password-protected; cannot extract images"
+        ) from exc
+    except Exception as exc:
+        raise PdfToolkitError(f"could not read PDF {in_path}: {exc}") from exc
+
+    result = ExtractImagesResult()
+    stem = os.path.splitext(os.path.basename(in_path))[0]
+
+    with pdf:
+        os.makedirs(outdir, exist_ok=True)
+        seen: set = set()
+        for page_number, page in enumerate(pdf.pages, start=1):
+            index = 0
+            for raw in page.get_images().values():
+                # De-duplicate images shared across pages by object identity.
+                key = raw.objgen if raw.is_indirect else id(raw)
+                if key in seen:
+                    continue
+                seen.add(key)
+                try:
+                    image = pikepdf.PdfImage(raw)
+                except Exception:  # not an image (e.g. a plain form) - skip
+                    continue
+                if min_size and (image.width < min_size or image.height < min_size):
+                    continue
+                index += 1
+                prefix = os.path.join(
+                    outdir, f"{stem}_p{page_number:03d}_img{index:02d}"
+                )
+                written = _extract_one_image(image, prefix)
+                if written is None:
+                    result.skipped += 1
+                    index -= 1  # keep numbering gap-free for written files
+                else:
+                    result.files.append(written)
+
+    return result
 
 
 # --------------------------------------------------------------------------- #

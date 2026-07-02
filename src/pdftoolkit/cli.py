@@ -22,6 +22,7 @@ from .core import (
     PdfToolkitError,
     compress,
     delete_pages,
+    extract_images,
     extract_pages,
     info,
     merge,
@@ -93,6 +94,20 @@ def _cmd_delete(args: argparse.Namespace) -> int:
 def _cmd_reorder(args: argparse.Namespace) -> int:
     count = reorder(args.input, args.output, order=args.order)
     print(f"Reordered to [{args.order}] ({count} pages) -> {args.output}")
+    return EXIT_OK
+
+
+def _cmd_extract_images(args: argparse.Namespace) -> int:
+    outdir = args.outdir or "."
+    result = extract_images(args.input, outdir, min_size=args.min_size)
+    if not result.files:
+        print(f"No embedded images found in {args.input}")
+    else:
+        print(f"Extracted {len(result.files)} image(s) to {outdir}:")
+        for path in result.files:
+            print(f"  {path}")
+    if result.skipped:
+        print(f"  note: skipped {result.skipped} image(s) that could not be decoded")
     return EXIT_OK
 
 
@@ -222,6 +237,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_reorder.add_argument("-o", "--output", required=True, help="output PDF path")
     p_reorder.set_defaults(func=_cmd_reorder)
+
+    # extract-images
+    p_imgs = sub.add_parser(
+        "extract-images", help="export embedded raster images to files"
+    )
+    p_imgs.add_argument("input", help="input PDF file")
+    p_imgs.add_argument(
+        "--outdir", default=".", help="output directory (default: current dir)"
+    )
+    p_imgs.add_argument(
+        "--min-size",
+        type=int,
+        default=0,
+        metavar="N",
+        dest="min_size",
+        help="skip images narrower or shorter than N pixels (default: 0)",
+    )
+    p_imgs.set_defaults(func=_cmd_extract_images)
 
     # text
     p_text = sub.add_parser("text", help="extract plain text, per page")

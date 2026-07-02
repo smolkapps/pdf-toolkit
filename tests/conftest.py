@@ -41,6 +41,24 @@ def make_pdf(tmp_path):
 
 
 @pytest.fixture
+def make_image_pdf(tmp_path):
+    """Return a factory that writes a PDF with embedded images into tmp_path.
+
+    Usage:
+        path = make_image_pdf("doc.pdf", [1, 3])          # images on pages 1 & 3
+        path = make_image_pdf("doc.pdf", [2], total_pages=4)
+    """
+
+    def _factory(name, image_pages, *, total_pages=None, size=(32, 24)):
+        out = str(tmp_path / name)
+        return make_fixtures.make_image_pdf(
+            out, image_pages, total_pages=total_pages, size=size
+        )
+
+    return _factory
+
+
+@pytest.fixture
 def page_markers():
     """Return a helper that reads the per-page integer markers from a PDF.
 

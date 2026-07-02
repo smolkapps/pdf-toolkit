@@ -29,6 +29,7 @@ This installs a single console script: **`pdftoolkit`**.
 | `delete`   | Remove a subset of pages                                           |
 | `reorder`  | Rearrange pages into a new order                                   |
 | `text`     | Extract plain text, one block per page                            |
+| `extract-images` | Export every embedded raster image to a file                |
 | `info`     | Show page count, page size, PDF version, metadata, encryption      |
 | `compress` | Re-save with object streams + stream compression (best effort)     |
 
@@ -71,6 +72,9 @@ pdftoolkit reorder report.pdf --order 3,1,2 -o shuffled.pdf
 # Inspect and read
 pdftoolkit info report.pdf
 pdftoolkit text report.pdf
+
+# Export every embedded raster image (skipping tiny spacer pixels)
+pdftoolkit extract-images report.pdf --outdir images/ --min-size 8
 
 # Shrink (honest about results — see below)
 pdftoolkit compress report.pdf -o smaller.pdf

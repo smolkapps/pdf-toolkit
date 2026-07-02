@@ -98,6 +98,62 @@ def make_named_pages(path: str, labels: Iterable[str], *, pagesize=LETTER) -> st
     return path
 
 
+def make_image_pdf(
+    path: str,
+    image_pages: Iterable[int],
+    *,
+    total_pages: Optional[int] = None,
+    size=(32, 24),
+    pagesize=LETTER,
+) -> str:
+    """Create a PDF that embeds a distinct raster image on selected pages.
+
+    Each page listed in ``image_pages`` (1-based) gets a small, deterministic
+    RGB gradient image drawn on it; every page also carries the usual
+    ``PAGE n`` text marker. Pages not listed contain only text. This gives the
+    ``extract-images`` tests a document with a known number of embedded
+    raster images at known page positions.
+
+    Args:
+        path: output file path.
+        image_pages: 1-based page numbers that should carry an image.
+        total_pages: total page count (defaults to max(image_pages)).
+        size: (width, height) in pixels of each embedded image.
+        pagesize: a reportlab pagesize tuple.
+
+    Returns:
+        ``path``.
+    """
+    from reportlab.lib.utils import ImageReader  # local: only image fixtures need it
+    from PIL import Image
+
+    image_pages = set(image_pages)
+    if not image_pages:
+        raise ValueError("image_pages must be non-empty")
+    total = total_pages if total_pages is not None else max(image_pages)
+    if total < max(image_pages):
+        raise ValueError("total_pages is smaller than the highest image page")
+
+    width_px, height_px = size
+    pdf = canvas.Canvas(path, pagesize=pagesize)
+    _, height = pagesize
+    for n in range(1, total + 1):
+        pdf.setFont("Helvetica-Bold", 48)
+        pdf.drawString(72, height - 120, f"PAGE {n}")
+        if n in image_pages:
+            # A per-page-distinct gradient so each image is byte-different.
+            img = Image.new("RGB", (width_px, height_px))
+            for x in range(width_px):
+                for y in range(height_px):
+                    img.putpixel((x, y), ((x * 7 + n * 13) % 256, (y * 11) % 256, n * 5 % 256))
+            pdf.drawImage(
+                ImageReader(img), 72, height - 320, width=128, height=96
+            )
+        pdf.showPage()
+    pdf.save()
+    return path
+
+
 def _main(argv: Optional[list] = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv:

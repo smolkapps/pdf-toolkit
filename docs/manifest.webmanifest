@@ -1,0 +1,28 @@
+{
+  "name": "PDF Toolkit",
+  "short_name": "PDF Toolkit",
+  "description": "Merge, split, rotate, reorder, and inspect PDF files — entirely in your browser, with no uploads.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf9f7",
+  "theme_color": "#c9463a",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

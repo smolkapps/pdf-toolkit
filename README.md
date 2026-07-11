@@ -1,8 +1,17 @@
 # pdf-toolkit
 
-A complete, **offline** command-line toolkit for manipulating PDF files. No
-network access, no cloud services, no API keys — every operation runs locally
-against your files.
+A complete, **offline** toolkit for manipulating PDF files. No network
+access, no cloud services, no API keys — every operation runs locally
+against your files. It comes in two forms:
+
+- **A web app** (in [`docs/`](docs/)) — merge, split, rotate, reorganize, and
+  inspect PDFs entirely in your browser. Nothing is uploaded; processing is
+  done client-side by [pdf-lib](https://pdf-lib.js.org/) and the page works
+  offline after the first load. Serve the `docs/` directory statically (it is
+  GitHub Pages-ready), e.g. `python -m http.server -d docs`.
+- **A command-line tool** (`pdftoolkit`) — everything the web app does plus
+  text extraction, image extraction, and compression, scriptable in batch
+  jobs. Documented below.
 
 Built on [`pypdf`](https://pypdf.readthedocs.io/) for structural page
 operations and [`pikepdf`](https://pikepdf.readthedocs.io/) (libqpdf) for
@@ -127,6 +136,10 @@ Limitations to be aware of:
 ```bash
 pip install -e ".[test]"
 pytest -q
+
+# Web app tests (page-selector parser, ZIP writer, and the PDF operations
+# run against the vendored pdf-lib bundle; requires Node 18+):
+node --test tests/web/*.test.mjs
 ```
 
 Tests build their own known-content PDFs with `reportlab` (see

@@ -343,18 +343,27 @@ class ExtractImagesResult:
 # ImageDecompressionError), and Pillow refusing to decode the pixels
 # (OSError / DecompressionBombError). Any of these is caught, the offending
 # image is skipped and counted, and extraction continues with the next one.
-_UNEXTRACTABLE = (
-    pikepdf.UnsupportedImageTypeError,
-    pikepdf.HifiPrintImageNotTranscodableError,
-    pikepdf.DependencyError,
-    pikepdf.PdfError,
-    _image_module.NotExtractableError,
-    _image_module.InvalidPdfImageError,
-    _image_module.ImageDecompressionError,
-    NotImplementedError,
-    ValueError,
-    OSError,
-    _PILImage.DecompressionBombError,
+#
+# The pikepdf image-exception classes are looked up by name because they have
+# moved/been removed across releases (e.g. NotExtractableError existed in
+# pikepdf < 10.10 but was dropped in 10.10.0); a missing name is simply left
+# out of the tuple instead of crashing at import time.
+_UNEXTRACTABLE = tuple(
+    exc
+    for exc in (
+        getattr(pikepdf, "UnsupportedImageTypeError", None),
+        getattr(pikepdf, "HifiPrintImageNotTranscodableError", None),
+        getattr(pikepdf, "DependencyError", None),
+        pikepdf.PdfError,
+        getattr(_image_module, "NotExtractableError", None),
+        getattr(_image_module, "InvalidPdfImageError", None),
+        getattr(_image_module, "ImageDecompressionError", None),
+        NotImplementedError,
+        ValueError,
+        OSError,
+        _PILImage.DecompressionBombError,
+    )
+    if isinstance(exc, type) and issubclass(exc, BaseException)
 )
 
 

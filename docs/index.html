@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF Toolkit — merge, split &amp; rotate PDFs privately in your browser</title>
+  <meta name="description" content="Free, private PDF tools that run entirely in your browser. Merge, split, rotate, reorder, and inspect PDF files — no uploads, no accounts, no file size games. Works offline.">
+  <link rel="canonical" href="https://smolkapps.github.io/pdf-toolkit/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PDF Toolkit">
+  <meta property="og:title" content="PDF Toolkit — merge, split &amp; rotate PDFs privately in your browser">
+  <meta property="og:description" content="Free, private PDF tools that run entirely in your browser. Merge, split, rotate, reorder, and inspect PDFs — your files never leave your device.">
+  <meta property="og:url" content="https://smolkapps.github.io/pdf-toolkit/">
+  <meta property="og:image" content="https://smolkapps.github.io/pdf-toolkit/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="PDF Toolkit — private, in-browser PDF tools">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PDF Toolkit — merge, split &amp; rotate PDFs privately in your browser">
+  <meta name="twitter:description" content="Free, private PDF tools that run entirely in your browser. No uploads, no accounts. Works offline.">
+  <meta name="twitter:image" content="https://smolkapps.github.io/pdf-toolkit/og.png">
+
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#faf9f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#191b1f" media="(prefers-color-scheme: dark)">
+
+  <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "PDF Toolkit",
+    "url": "https://smolkapps.github.io/pdf-toolkit/",
+    "description": "Free, private PDF tools that run entirely in your browser. Merge, split, rotate, reorder, and inspect PDF files without uploading them anywhere.",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+</head>
+<body>
+<a class="skip-link" href="#tools">Skip to the tools</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <div class="brand">
+      <img src="icons/favicon.svg" alt="" width="40" height="40" class="brand-icon">
+      <div>
+        <p class="brand-name">PDF Toolkit</p>
+        <p class="brand-tag">Merge, split &amp; rotate PDFs — right here, right now</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button type="button" id="share-btn" class="btn btn-ghost" title="Share PDF Toolkit">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        Share
+      </button>
+      <a class="btn btn-ghost" href="https://github.com/smolkapps/pdf-toolkit" rel="noopener">
+        <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Every PDF fix you need, without the upload</h1>
+    <p class="hero-sub">
+      Merge, split, rotate, reorganize, and inspect PDF files — processed entirely
+      on your device by your browser. Nothing is uploaded, nothing is tracked, and
+      once the page has loaded it even works offline.
+    </p>
+    <ul class="trust-badges" aria-label="Why this tool is safe to use">
+      <li><span aria-hidden="true">🔒</span> Files never leave your device</li>
+      <li><span aria-hidden="true">✈️</span> Works offline</li>
+      <li><span aria-hidden="true">🚫</span> No sign-up, no watermarks</li>
+      <li><span aria-hidden="true">⭐</span> Free &amp; open source</li>
+    </ul>
+  </section>
+
+  <noscript>
+    <p class="noscript-warning">
+      PDF Toolkit does all of its work locally in your browser, so it needs
+      JavaScript to run. Please enable JavaScript, or use the
+      <a href="https://github.com/smolkapps/pdf-toolkit">command-line version</a>.
+    </p>
+  </noscript>
+
+  <section id="tools" class="tools-card" aria-label="PDF tools">
+    <div class="tabs" role="tablist" aria-label="Choose a tool">
+      <button role="tab" id="tab-merge" aria-controls="panel-merge" aria-selected="true" type="button">Merge</button>
+      <button role="tab" id="tab-split" aria-controls="panel-split" aria-selected="false" tabindex="-1" type="button">Split</button>
+      <button role="tab" id="tab-rotate" aria-controls="panel-rotate" aria-selected="false" tabindex="-1" type="button">Rotate</button>
+      <button role="tab" id="tab-organize" aria-controls="panel-organize" aria-selected="false" tabindex="-1" type="button">Organize</button>
+      <button role="tab" id="tab-inspect" aria-controls="panel-inspect" aria-selected="false" tabindex="-1" type="button">Inspect</button>
+    </div>
+
+    <!-- Merge -->
+    <section id="panel-merge" role="tabpanel" aria-labelledby="tab-merge" class="panel">
+      <p class="tool-desc">Combine two or more PDFs into a single file. Files are joined top to bottom in the order shown — use the arrows to rearrange.</p>
+      <div class="dropzone" id="merge-drop" tabindex="0" role="button" aria-label="Add PDF files to merge: press Enter to browse, or drag and drop files here">
+        <svg class="dz-icon" aria-hidden="true" viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0-12L8 7m4-4 4 4"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+        <p><strong>Drop PDFs here</strong> or <span class="dz-browse">browse your files</span></p>
+        <p class="dz-hint">Add as many as you like — they stay on this device</p>
+        <input type="file" id="merge-input" accept=".pdf,application/pdf" multiple hidden>
+      </div>
+      <ul class="file-list" id="merge-list" aria-label="Files to merge, in order"></ul>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="merge-run" disabled>Merge <span id="merge-count"></span></button>
+        <button type="button" class="btn btn-ghost" id="merge-clear" hidden>Clear all</button>
+      </div>
+      <div class="status" id="merge-status" role="status" aria-live="polite"></div>
+      <div class="results" id="merge-results"></div>
+    </section>
+
+    <!-- Split -->
+    <section id="panel-split" role="tabpanel" aria-labelledby="tab-split" class="panel" hidden>
+      <p class="tool-desc">Break one PDF into smaller ones — pull out a page range, cut it into fixed-size chunks, or save every page as its own file.</p>
+      <div class="dropzone" id="split-drop" tabindex="0" role="button" aria-label="Choose a PDF to split: press Enter to browse, or drag and drop a file here">
+        <svg class="dz-icon" aria-hidden="true" viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8.1 7.6 20 19.5M8.1 16.4 20 4.5M14.5 13 20 19.5"/></svg>
+        <p><strong>Drop a PDF here</strong> or <span class="dz-browse">browse your files</span></p>
+        <p class="dz-hint">One file at a time</p>
+        <input type="file" id="split-input" accept=".pdf,application/pdf" hidden>
+      </div>
+      <div class="file-chip" id="split-file" hidden></div>
+      <fieldset class="options" id="split-options" disabled>
+        <legend>How should it be split?</legend>
+        <label class="radio-row">
+          <input type="radio" name="split-mode" value="ranges" checked>
+          <span>Extract pages <input type="text" id="split-ranges" class="inline-input" inputmode="numeric" placeholder="e.g. 1-3,5" aria-label="Pages to extract, for example 1-3,5"> into one new PDF</span>
+        </label>
+        <label class="radio-row">
+          <input type="radio" name="split-mode" value="every">
+          <span>Cut into chunks of <input type="number" id="split-every" class="inline-input inline-num" min="1" step="1" value="1" aria-label="Pages per chunk"> page(s) each</span>
+        </label>
+        <label class="radio-row">
+          <input type="radio" name="split-mode" value="all">
+          <span>Save every page as a separate PDF</span>
+        </label>
+        <p class="field-error" id="split-error" role="alert" hidden></p>
+      </fieldset>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="split-run" disabled>Split PDF</button>
+      </div>
+      <div class="status" id="split-status" role="status" aria-live="polite"></div>
+      <div class="results" id="split-results"></div>
+    </section>
+
+    <!-- Rotate -->
+    <section id="panel-rotate" role="tabpanel" aria-labelledby="tab-rotate" class="panel" hidden>
+      <p class="tool-desc">Turn pages the right way up. Rotate the whole document, or just the pages you name.</p>
+      <div class="dropzone" id="rotate-drop" tabindex="0" role="button" aria-label="Choose a PDF to rotate: press Enter to browse, or drag and drop a file here">
+        <svg class="dz-icon" aria-hidden="true" viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        <p><strong>Drop a PDF here</strong> or <span class="dz-browse">browse your files</span></p>
+        <p class="dz-hint">One file at a time</p>
+        <input type="file" id="rotate-input" accept=".pdf,application/pdf" hidden>
+      </div>
+      <div class="file-chip" id="rotate-file" hidden></div>
+      <fieldset class="options" id="rotate-options" disabled>
+        <legend>Rotation</legend>
+        <div class="radio-row-group" role="radiogroup" aria-label="Rotation amount">
+          <label class="radio-pill"><input type="radio" name="rotate-deg" value="90" checked><span>90° right</span></label>
+          <label class="radio-pill"><input type="radio" name="rotate-deg" value="-90"><span>90° left</span></label>
+          <label class="radio-pill"><input type="radio" name="rotate-deg" value="180"><span>180°</span></label>
+        </div>
+        <label class="field-label" for="rotate-pages">Pages to rotate <span class="muted">(leave blank for all pages)</span></label>
+        <input type="text" id="rotate-pages" class="text-input" inputmode="numeric" placeholder="e.g. 1,3-5">
+        <p class="field-error" id="rotate-error" role="alert" hidden></p>
+      </fieldset>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="rotate-run" disabled>Rotate pages</button>
+      </div>
+      <div class="status" id="rotate-status" role="status" aria-live="polite"></div>
+      <div class="results" id="rotate-results"></div>
+    </section>
+
+    <!-- Organize -->
+    <section id="panel-organize" role="tabpanel" aria-labelledby="tab-organize" class="panel" hidden>
+      <p class="tool-desc">Keep, remove, or rearrange pages. Reordering accepts repeats and reversed ranges, so “5-1” reverses a five-page document.</p>
+      <div class="dropzone" id="organize-drop" tabindex="0" role="button" aria-label="Choose a PDF to organize: press Enter to browse, or drag and drop a file here">
+        <svg class="dz-icon" aria-hidden="true" viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <p><strong>Drop a PDF here</strong> or <span class="dz-browse">browse your files</span></p>
+        <p class="dz-hint">One file at a time</p>
+        <input type="file" id="organize-input" accept=".pdf,application/pdf" hidden>
+      </div>
+      <div class="file-chip" id="organize-file" hidden></div>
+      <fieldset class="options" id="organize-options" disabled>
+        <legend>What do you want to do?</legend>
+        <div class="radio-row-group" role="radiogroup" aria-label="Organize action">
+          <label class="radio-pill"><input type="radio" name="organize-mode" value="extract" checked><span>Keep only…</span></label>
+          <label class="radio-pill"><input type="radio" name="organize-mode" value="delete"><span>Delete…</span></label>
+          <label class="radio-pill"><input type="radio" name="organize-mode" value="reorder"><span>Reorder as…</span></label>
+        </div>
+        <label class="field-label" for="organize-pages" id="organize-pages-label">Pages to keep</label>
+        <input type="text" id="organize-pages" class="text-input" inputmode="numeric" placeholder="e.g. 2-4,7">
+        <p class="field-error" id="organize-error" role="alert" hidden></p>
+      </fieldset>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="organize-run" disabled>Apply changes</button>
+      </div>
+      <div class="status" id="organize-status" role="status" aria-live="polite"></div>
+      <div class="results" id="organize-results"></div>
+    </section>
+
+    <!-- Inspect -->
+    <section id="panel-inspect" role="tabpanel" aria-labelledby="tab-inspect" class="panel" hidden>
+      <p class="tool-desc">See what’s inside a PDF before you work on it: page count, page sizes, and the document’s embedded metadata.</p>
+      <div class="dropzone" id="inspect-drop" tabindex="0" role="button" aria-label="Choose a PDF to inspect: press Enter to browse, or drag and drop a file here">
+        <svg class="dz-icon" aria-hidden="true" viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <p><strong>Drop a PDF here</strong> or <span class="dz-browse">browse your files</span></p>
+        <p class="dz-hint">Read-only — the file is never modified</p>
+        <input type="file" id="inspect-input" accept=".pdf,application/pdf" hidden>
+      </div>
+      <div class="status" id="inspect-status" role="status" aria-live="polite"></div>
+      <div class="results" id="inspect-results"></div>
+    </section>
+  </section>
+
+  <section class="content-grid" aria-label="About PDF Toolkit">
+    <article>
+      <h2>Your files stay yours</h2>
+      <p>
+        Most online PDF sites upload your document to their servers to process it.
+        PDF Toolkit doesn’t: every merge, split, and rotation happens in JavaScript
+        running on <em>your</em> machine. You can load this page, disconnect from
+        the internet, and keep working — that’s the whole point.
+      </p>
+    </article>
+    <article>
+      <h2>Page selectors, explained</h2>
+      <p>
+        Tools that take page numbers all use the same simple syntax:
+        <code>3</code> is a single page, <code>2-4</code> is an inclusive range,
+        and <code>1-3,5,7-8</code> combines both. Page numbers start at 1.
+        A reversed range like <code>4-2</code> counts backwards — handy for
+        reversing a document with the Reorder tool.
+      </p>
+    </article>
+    <article>
+      <h2>Big files welcome</h2>
+      <p>
+        Because nothing is uploaded, there’s no upload limit and no waiting on
+        someone else’s server. Processing speed depends only on your device;
+        documents with hundreds of pages are typically done in a few seconds.
+      </p>
+    </article>
+    <article>
+      <h2>Prefer a terminal?</h2>
+      <p>
+        This app is the browser companion to the open-source
+        <a href="https://github.com/smolkapps/pdf-toolkit"><code>pdftoolkit</code>
+        command line</a>, which adds text extraction, image extraction, and
+        compression, and scripts nicely in batch jobs. Same page-selector syntax,
+        same offline philosophy.
+      </p>
+    </article>
+  </section>
+
+  <section class="faq" aria-label="Frequently asked questions">
+    <h2>Frequently asked questions</h2>
+    <details>
+      <summary>Is it really private? How can I check?</summary>
+      <p>Yes. Open your browser’s developer tools on the Network tab and run any operation — you’ll see no requests carrying your file. You can also load the page once, switch off your connection, and everything still works. The <a href="https://github.com/smolkapps/pdf-toolkit">source code</a> is public.</p>
+    </details>
+    <details>
+      <summary>Does it work with password-protected PDFs?</summary>
+      <p>No. Encrypted PDFs are detected and refused with a clear message rather than silently producing broken output. Decrypt the file with the password owner’s tools first.</p>
+    </details>
+    <details>
+      <summary>Will merging or splitting reduce quality?</summary>
+      <p>No. Pages are copied structurally — text, images, and vector graphics are moved as-is, never re-rendered or recompressed.</p>
+    </details>
+    <details>
+      <summary>Is there a file size limit?</summary>
+      <p>Only your device’s memory. There is no artificial cap and no “premium” tier — the app has no server to pay for.</p>
+    </details>
+    <details>
+      <summary>Can I use it offline or install it?</summary>
+      <p>Yes. After your first visit the app is cached and works without a connection. On most browsers you can also install it from the address bar (“Install app” / “Add to Home Screen”) and it opens like a native app.</p>
+    </details>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>
+      <strong>PDF Toolkit</strong> · free &amp; open source ·
+      <a href="https://github.com/smolkapps/pdf-toolkit/blob/main/LICENSE" rel="noopener">MIT license</a>
+    </p>
+    <p class="muted">
+      No cookies, no analytics, no uploads. Built on
+      <a href="https://pdf-lib.js.org/" rel="noopener">pdf-lib</a>.
+      · <a href="https://github.com/smolkapps/pdf-toolkit/issues" rel="noopener">Report a problem</a>
+    </p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="vendor/pdf-lib.min.js" defer></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
